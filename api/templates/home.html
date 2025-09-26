@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Gestão de Material Didático - API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .system-info {
+            background: #f8f9fa;
+            padding: 20px 40px;
+            border-bottom: 1px solid #e9ecef;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            text-align: center;
+        }
+
+        .info-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .info-item strong {
+            display: block;
+            color: #2c3e50;
+            font-size: 0.9rem;
+            margin-bottom: 5px;
+        }
+
+        .info-item span {
+            color: #3498db;
+            font-weight: 600;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .status-badge.dev {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-badge.prod {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .routes-section {
+            margin-bottom: 40px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #3498db;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .routes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+
+        .route-card {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 12px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .route-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+            border-color: #3498db;
+        }
+
+        .route-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+        }
+
+        .route-name {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
+
+        .route-name:hover {
+            color: #3498db;
+        }
+
+        .route-description {
+            color: #6c757d;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            margin-bottom: 15px;
+        }
+
+        .route-url {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.85rem;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 6px;
+            word-break: break-all;
+            position: relative;
+        }
+
+        .copy-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #2980b9;
+        }
+
+        .quick-actions {
+            background: #e8f4f8;
+            padding: 30px;
+            margin: 40px -40px -40px -40px;
+            text-align: center;
+        }
+
+        .quick-actions h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3rem;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            display: inline-block;
+            padding: 12px 24px;
+            background: linear-gradient(135deg, #3498db, #2ecc71);
+            color: white;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.4);
+        }
+
+        .action-btn.secondary {
+            background: linear-gradient(135deg, #95a5a6, #7f8c8d);
+            box-shadow: 0 4px 15px rgba(149, 165, 166, 0.3);
+        }
+
+        .action-btn.secondary:hover {
+            box-shadow: 0 6px 20px rgba(149, 165, 166, 0.4);
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: #6c757d;
+            font-size: 0.9rem;
+            border-top: 1px solid #e9ecef;
+            margin-top: 40px;
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 30px 20px;
+            }
+
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .content {
+                padding: 20px;
+            }
+
+            .routes-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .info-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .quick-actions {
+                margin: 20px -20px -20px -20px;
+                padding: 20px;
+            }
+        }
+
+        /* Animation for loading */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .route-card {
+            animation: fadeInUp 0.6s ease forwards;
+        }
+
+        .route-card:nth-child(1) { animation-delay: 0.1s; }
+        .route-card:nth-child(2) { animation-delay: 0.2s; }
+        .route-card:nth-child(3) { animation-delay: 0.3s; }
+        .route-card:nth-child(4) { animation-delay: 0.4s; }
+        .route-card:nth-child(5) { animation-delay: 0.5s; }
+        .route-card:nth-child(6) { animation-delay: 0.6s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎓 Sistema de Material Didático</h1>
+            <p>API RESTful para gerenciamento de envios de material didático educacional</p>
+        </div>
+
+        <div class="system-info">
+            <div class="info-grid">
+                <div class="info-item">
+                    <strong>🚀 Status do Sistema</strong>
+                    <span class="status-badge {% if system_info.debug_mode %}dev{% else %}prod{% endif %}">
+                        {% if system_info.debug_mode %}Desenvolvimento{% else %}Produção{% endif %}
+                    </span>
+                </div>
+                <div class="info-item">
+                    <strong>📦 Versão da API</strong>
+                    <span>{{ system_info.api_version }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>🐍 Django</strong>
+                    <span>{{ system_info.django_version|default:"4.2+" }}</span>
+                </div>
+                <div class="info-item">
+                    <strong>🌐 Base URL</strong>
+                    <span>{{ system_info.base_url }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="content">
+            {% for section_name, section_routes in routes.items %}
+            <div class="routes-section">
+                <h2 class="section-title">
+                    {% if section_name == "Documentação da API" %}📚
+                    {% elif section_name == "Administração" %}⚙️
+                    {% elif section_name == "Endpoints da API" %}🔗
+                    {% elif section_name == "Endpoints Especiais" %}⭐
+                    {% endif %}
+                    {{ section_name }}
+                </h2>
+                <div class="routes-grid">
+                    {% for route in section_routes %}
+                    <div class="route-card">
+                        <a href="{{ route.url }}" class="route-name" target="_blank">
+                            {{ route.name }}
+                        </a>
+                        <p class="route-description">
+                            {{ route.description }}
+                        </p>
+                        <div class="route-url">
+                            {{ base_url }}{{ route.url }}
+                            <button class="copy-btn" onclick="copyToClipboard('{{ base_url }}{{ route.url }}')">
+                                📋
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="quick-actions">
+            <h3>🚀 Ações Rápidas</h3>
+            <div class="action-buttons">
+                <a href="/api/docs/" class="action-btn" target="_blank">
+                    🔬 Testar API (Swagger)
+                </a>
+                <a href="/api/" class="action-btn secondary" target="_blank">
+                    🏠 Explorar API
+                </a>
+                <a href="/admin/" class="action-btn secondary" target="_blank">
+                    ⚙️ Administração
+                </a>
+                <a href="/api/redoc/" class="action-btn secondary" target="_blank">
+                    📖 Documentação
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                💡 <strong>Dica:</strong> Use o Swagger UI para testar interativamente todos os endpoints da API
+                <br>
+                📧 Suporte: <strong>dev@educacao.gov.br</strong> | 🌟 Versão {{ system_info.api_version }}
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show feedback
+                event.target.textContent = '✅';
+                setTimeout(() => {
+                    event.target.textContent = '📋';
+                }, 2000);
+            }).catch(function(err) {
+                console.error('Could not copy text: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.focus();
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    event.target.textContent = '✅';
+                    setTimeout(() => {
+                        event.target.textContent = '📋';
+                    }, 2000);
+                } catch (err) {
+                    console.error('Fallback: Could not copy text: ', err);
+                }
+                document.body.removeChild(textArea);
+            });
+        }
+
+        // Add loading animation
+        document.addEventListener('DOMContentLoaded', function() {
+            const cards = document.querySelectorAll('.route-card');
+            cards.forEach((card, index) => {
+                card.style.opacity = '0';
+                card.style.transform = 'translateY(30px)';
+                setTimeout(() => {
+                    card.style.transition = 'all 0.6s ease';
+                    card.style.opacity = '1';
+                    card.style.transform = 'translateY(0)';
+                }, index * 100);
+            });
+        });
+
+        // Add hover effects
+        document.querySelectorAll('.route-card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-5px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    </script>
+</body>
+</html>
