@@ -9,8 +9,10 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-import os
+from decouple import config # use get envs
 from pathlib import Path
+import os
+from django.core.management.utils import get_random_secret_key
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,8 +39,15 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'rest_framework',
-    'api',
+    
+    # Third-party apps
+    'rest_framework',           # Django REST Framework
+    'django_filters',           # Advanced filtering
+    'corsheaders',              # CORS handling for frontend
+    'drf_spectacular',          # OpenAPI/Swagger documentation
+    
+    # Your app
+    'api',        # Replace with your actual app name
 ]
 
 MIDDLEWARE = [
@@ -49,7 +58,9 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',        # Must be at the top
 ]
+
 
 ROOT_URLCONF = 'config.urls'
 
@@ -77,13 +88,14 @@ WSGI_APPLICATION = 'config.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('DB_NAME'),     
-        'USER': os.getenv('DB_USER'),   
-        'PASSWORD': os.getenv('DB_PASSWORD'), 
-        'HOST':os.getenv('DB_HOST'),   
-        'PORT': os.getenv('DB_PORT'),  
+        'NAME': config('DB_NAME'),
+        'USER': config('DB_USER'),
+        'PASSWORD': config('DB_PASSWORD'),
+        'HOST': config('DB_HOST', default='localhost'),
+        'PORT': config('DB_PORT', default='5432'),
     }
 }
+
 
 
 
@@ -106,16 +118,6 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 
-# Internationalization
-# https://docs.djangoproject.com/en/5.2/topics/i18n/
-
-LANGUAGE_CODE = 'en-us'
-
-TIME_ZONE = 'UTC'
-
-USE_I18N = True
-
-USE_TZ = True
 
 
 # Static files (CSS, JavaScript, Images)
@@ -127,3 +129,252 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+# Django REST Framework configuration
+REST_FRAMEWORK = {
+    # Pagination
+    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
+    'PAGE_SIZE': 20,
+    
+    # Filtering, searching and ordering
+    'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
+    
+    # Authentication (change for production)
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',  # Enable if using tokens
+    ],
+    
+    # Permissions (change for production)
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.AllowAny',  # Change to IsAuthenticated for production
+    ],
+    
+    # Renderers
+    'DEFAULT_RENDERER_CLASSES': [
+        'rest_framework.renderers.JSONRenderer',
+        'rest_framework.renderers.BrowsableAPIRenderer',
+    ],
+    
+    # Parsers
+    'DEFAULT_PARSER_CLASSES': [
+        'rest_framework.parsers.JSONParser',
+        'rest_framework.parsers.FormParser',
+        'rest_framework.parsers.MultiPartParser',
+    ],
+    
+    # Schema generation
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
+    
+    # Error handling
+    'EXCEPTION_HANDLER': 'rest_framework.views.exception_handler',
+    
+    # Throttling (optional - for rate limiting)
+    'DEFAULT_THROTTLE_CLASSES': [
+        'rest_framework.throttling.AnonRateThrottle',
+        'rest_framework.throttling.UserRateThrottle'
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'anon': '100/hour',
+        'user': '1000/hour'
+    }
+}
+
+
+
+
+# drf-spectacular (OpenAPI/Swagger) configuration
+SPECTACULAR_SETTINGS = {
+    # Basic API information
+    'TITLE': 'Sistema de Gestão de Material Didático API',
+    # 'DESCRIPTION': '''
+    # API RESTful para gerenciamento de envios de material didático educacional.
+    
+    # ## Funcionalidades Principais
+    
+    # ### 👥 Gestão de Usuários e Perfis
+    # - Cadastro e gerenciamento de usuários
+    # - Controle de perfis e permissões
+    # - Validação de CPF e dados pessoais
+    
+    # ### 🏫 Gestão Acadêmica
+    # - Controle de etapas escolares (séries)
+    # - Gerenciamento de disciplinas
+    # - Organização por ano letivo
+    
+    # ### 📚 Controle de Material Didático
+    # - Registro de envios de material
+    # - Acompanhamento de status
+    # - Controle de prazos e validações
+    # - Observações da gerência
+    
+    # ### 📊 Relatórios e Estatísticas
+    # - Estatísticas por período
+    # - Relatórios de envios atrasados
+    # - Acompanhamento por usuário/disciplina
+    
+    # ## Autenticação
+    
+    # Durante o desenvolvimento, a API está configurada para acesso público.
+    # Em produção, será necessário configurar autenticação adequada.
+    
+    # ## Filtros e Buscas
+    
+    # Todos os endpoints suportam:
+    # - **Filtros**: por campos específicos (ex: `?ano_referencia=2024`)
+    # - **Busca**: texto livre em campos relevantes (ex: `?search=Maria`)
+    # - **Ordenação**: por diferentes critérios (ex: `?ordering=nome_usuario`)
+    # - **Paginação**: automática com controle de tamanho (ex: `?page=2&page_size=50`)
+    
+    # ## Exemplos de Uso
+    
+    # ### Filtrar envios por período
+    # ```
+    # GET /api/envios-material/?ano_referencia=2024&mes_referencia=3
+    # ```
+    
+    # ### Buscar usuários
+    # ```
+    # GET /api/usuarios/?search=Maria Silva
+    # ```
+    
+    # ### Ordenar por data
+    # ```
+    # GET /api/envios-material/?ordering=-data_envio_escola
+    # ```
+    # ''',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    
+    # Contact and license information
+    'CONTACT': {
+        'name': 'Equipe de Desenvolvimento',
+        'email': 'dev@educacao.gov.br',
+        'url': 'https://educacao.gov.br/contato'
+    },
+    'LICENSE': {
+        'name': 'MIT License',
+        'url': 'https://opensource.org/licenses/MIT'
+    },
+    
+    # API organization
+    'TAGS': [
+        {
+            'name': 'Perfis',
+            'description': '👤 Gestão de perfis de usuário (roles/funções do sistema)'
+        },
+        {
+            'name': 'Usuários', 
+            'description': '👥 Gestão completa de usuários do sistema'
+        },
+        {
+            'name': 'Etapas Escolares',
+            'description': '🎓 Gestão de etapas escolares (séries/anos letivos)'
+        },
+        {
+            'name': 'Disciplinas',
+            'description': '📖 Gestão de disciplinas acadêmicas'
+        },
+        {
+            'name': 'Status de Envio',
+            'description': '📊 Gestão de status dos envios de material'
+        },
+        {
+            'name': 'Envios de Material',
+            'description': '📚 Gestão completa de envios de material didático'
+        }
+    ],
+    
+    # External documentation
+    'EXTERNAL_DOCS': {
+        'description': 'Documentação Adicional',
+        'url': 'https://docs.educacao.gov.br/api'
+    },
+    
+    # Server environments
+    'SERVERS': [
+        {
+            'url': 'http://localhost:8000',
+            'description': 'Servidor de Desenvolvimento Local'
+        },
+        {
+            'url': 'https://api-dev.educacao.gov.br',
+            'description': 'Servidor de Desenvolvimento'
+        },
+        {
+            'url': 'https://api.educacao.gov.br',
+            'description': 'Servidor de Produção'
+        }
+    ],
+    
+    # Swagger UI customization
+    'SWAGGER_UI_SETTINGS': {
+        'deepLinking': True,
+        'persistAuthorization': True,
+        'displayOperationId': True,
+        'filter': True,
+        'tryItOutEnabled': True,
+        'supportedSubmitMethods': ['get', 'post', 'put', 'patch', 'delete'],
+        'defaultModelsExpandDepth': 2,
+        'defaultModelExpandDepth': 2,
+    },
+    
+    # Advanced settings
+    'COMPONENT_SPLIT_REQUEST': True,
+    'SORT_OPERATIONS': True,
+    'ENUM_NAME_OVERRIDES': {
+        'ValidationErrorEnum': 'django.core.exceptions.ValidationError',
+    },
+    'POSTPROCESSING_HOOKS': [],
+    'PREPROCESSING_HOOKS': [],
+}
+
+# CORS configuration for frontend integration
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",      # React development server
+    "http://127.0.0.1:3000",      # Alternative localhost
+    "http://localhost:8080",      # Vue.js development server
+    "http://localhost:4200",      # Angular development server
+    "https://app.educacao.gov.br", # Production frontend
+]
+
+# CORS settings
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+    'cache-control',
+]
+
+CORS_ALLOWED_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
+]
+
+# Security settings for production
+SECURE_BROWSER_XSS_FILTER = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+X_FRAME_OPTIONS = 'DENY'
+
+# Internationalization
+LANGUAGE_CODE = 'pt-br'
+TIME_ZONE = 'America/Fortaleza'  # Adjust to your timezone
+USE_I18N = True
+USE_TZ = True
+
