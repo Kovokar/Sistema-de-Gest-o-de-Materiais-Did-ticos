@@ -3,7 +3,21 @@ from django.db import models
 from django.core.validators import RegexValidator
 
 
-class Perfil(models.Model):
+class BaseModel(models.Model):
+    """
+    Abstract base model to include common fields
+    """
+    created_by = models.CharField(max_length=100, null=True, blank=True, verbose_name="Criado por")
+    updated_by = models.CharField(max_length=100, null=True, blank=True, verbose_name="Atualizado por")
+    deleted_by = models.CharField(max_length=100, null=True, blank=True, verbose_name="Deletado por")
+    created_at = models.DateTimeField(auto_now_add=True,verbose_name="Criado em")
+    updated_at = models.DateTimeField(auto_now=True,verbose_name="Atualizado em")
+    deleted_at = models.DateTimeField(blank=True, null=True, default=None, verbose_name="Deletado em")
+    class Meta:
+        abstract = True
+
+
+class Perfil(BaseModel):
     """
     Model representing user profiles/roles
     """
@@ -19,7 +33,7 @@ class Perfil(models.Model):
         return self.nome_perfil
 
 
-class Usuario(models.Model):
+class Usuario(BaseModel):
     """
     Model representing system users
     """
@@ -68,7 +82,7 @@ class Usuario(models.Model):
         return f"{self.nome_usuario} - {self.matricula}"
 
 
-class EtapaEscolar(models.Model):
+class EtapaEscolar(BaseModel):
     """
     Model representing school stages/grades
     """
@@ -84,7 +98,7 @@ class EtapaEscolar(models.Model):
         return self.nome_etapa
 
 
-class Disciplina(models.Model):
+class Disciplina(BaseModel):
     """
     Model representing academic subjects
     """
@@ -100,7 +114,7 @@ class Disciplina(models.Model):
         return self.nome_disciplina
 
 
-class StatusEnvio(models.Model):
+class StatusEnvio(BaseModel):
     """
     Model representing submission status
     """
@@ -116,7 +130,7 @@ class StatusEnvio(models.Model):
         return self.descricao_status
 
 
-class EnvioMaterial(models.Model):
+class EnvioMaterial(BaseModel):
     """
     Model representing material submissions
     """
