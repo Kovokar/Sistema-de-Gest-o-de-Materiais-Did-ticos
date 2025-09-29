@@ -8,6 +8,9 @@ from django_filters import rest_framework as filters
 from django.db.models import Count, Q
 from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
 from drf_spectacular.openapi import OpenApiTypes
+from django.core.mail import EmailMessage
+from .serializers import FileUploadSerializer
+from rest_framework.views import APIView
 
 from .models import *
 from .serializers import *
@@ -582,3 +585,28 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         )
         serializer = EnvioMaterialSerializer(envios, many=True)
         return Response(serializer.data)
+    
+# app/views.py
+
+class FileUploadView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = FileUploadSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data["email"]
+            file = serializer.validated_data["file"]
+
+            try:
+                mail = EmailMessage(
+                    subject="Arquivo enviado pelo sistema",
+                    body="Segue o arquivo em anexo.",
+                    from_email=None,  # usa DEFAULT_FROM_EMAIL
+                    to=[email],
+                )
+                mail.attach(file.name, file.read(), file.content_type)
+                mail.send()
+
+                return Response({"message": "Arquivo enviado com sucesso!"}, status=status.HTTP_200_OK)
+            except Exception as e:
+                return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

@@ -23,6 +23,7 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 from api import views
+from api.views import *
 
 # Create router and register viewsets
 router = DefaultRouter()
@@ -46,6 +47,8 @@ urlpatterns = [
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/docs/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
+    path("upload/", FileUploadView.as_view(), name="file-upload"),
+
     
     # Browsable API authentication (optional)
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework')),

@@ -213,3 +213,8 @@ class EnvioMaterialStatsSerializer(serializers.Serializer):
     envios_rejeitados = serializers.IntegerField()
     mes_referencia = serializers.IntegerField()
     ano_referencia = serializers.IntegerField()
+    
+
+class FileUploadSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    file = serializers.FileField()
