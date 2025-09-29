@@ -11,9 +11,18 @@ from drf_spectacular.openapi import OpenApiTypes
 from django.core.mail import EmailMessage
 from .serializers import FileUploadSerializer
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+
 
 from .models import *
 from .serializers import *
+
+
+class HelloView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        return Response({'message': f'Olá, {request.user.username}!'})
 
 
 @extend_schema_view(

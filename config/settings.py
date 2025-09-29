@@ -45,6 +45,8 @@ INSTALLED_APPS = [
     'django_filters',           # Advanced filtering
     'corsheaders',              # CORS handling for frontend
     'drf_spectacular',          # OpenAPI/Swagger documentation
+    'rest_framework_simplejwt',
+
     
     # Your app
     'api',        # Replace with your actual app name
@@ -154,8 +156,10 @@ REST_FRAMEWORK = {
     
     # Authentication (change for production)
     'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.SessionAuthentication',
-        'rest_framework.authentication.TokenAuthentication',  # Enable if using tokens
+        # 'rest_framework.authentication.SessionAuthentication',
+        # 'rest_framework.authentication.TokenAuthentication',  # Enable if using tokens
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+
     ],
     
     # Permissions (change for production)
