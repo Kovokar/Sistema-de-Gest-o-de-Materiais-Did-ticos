@@ -1,6 +1,7 @@
 # models.py
 from django.db import models
 from django.core.validators import RegexValidator
+from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
 
 
 class BaseModel(models.Model):
@@ -33,25 +34,60 @@ class Perfil(BaseModel):
         return self.nome_perfil
 
 
-class Usuario(BaseModel):
+class UsuarioManager(BaseUserManager):
+    def create_user(self, matricula, cpf, senha=None, **extra_fields):
+        """
+        Cria e salva um usuário comum
+        """
+        if not matricula:
+            raise ValueError("O campo 'matricula' é obrigatório")
+        if not cpf:
+            raise ValueError("O campo 'cpf' é obrigatório")
+
+        user = self.model(
+            matricula=matricula,
+            cpf=cpf,
+            **extra_fields
+        )
+        user.set_password(senha)  # gera hash automaticamente
+        user.save(using=self._db)
+        return user
+
+    def create_superuser(self, matricula, cpf, senha=None, **extra_fields):
+        """
+        Cria e salva um superusuário
+        """
+        extra_fields.setdefault('is_staff', True)
+        extra_fields.setdefault('is_superuser', True)
+
+        if extra_fields.get('is_staff') is not True:
+            raise ValueError("Superusuário precisa ter is_staff=True")
+        if extra_fields.get('is_superuser') is not True:
+            raise ValueError("Superusuário precisa ter is_superuser=True")
+
+        return self.create_user(matricula, cpf, senha, **extra_fields)
+
+
+class Usuario(AbstractBaseUser, PermissionsMixin):
     """
-    Model representing system users
+    Modelo customizado de usuário
     """
+
     # CPF validator
     cpf_validator = RegexValidator(
         regex=r'^\d{3}\.\d{3}\.\d{3}-\d{2}$',
         message="CPF deve estar no formato XXX.XXX.XXX-XX"
     )
-    
+
     # Phone validator
     phone_validator = RegexValidator(
         regex=r'^\(\d{2}\)\s\d{4,5}-\d{4}$',
         message="Telefone deve estar no formato (XX) XXXXX-XXXX"
     )
-    
+
     id_usuario = models.AutoField(primary_key=True)
     id_perfil = models.ForeignKey(
-        Perfil, 
+        'Perfil',
         on_delete=models.CASCADE,
         db_column='Id_Perfil',
         verbose_name="Perfil"
@@ -59,25 +95,37 @@ class Usuario(BaseModel):
     nome_usuario = models.CharField(max_length=100, verbose_name="Nome do Usuário")
     matricula = models.CharField(max_length=50, unique=True, verbose_name="Matrícula")
     cpf = models.CharField(
-        max_length=14, 
-        unique=True, 
+        max_length=14,
+        unique=True,
         validators=[cpf_validator],
         verbose_name="CPF"
     )
-    senha = models.CharField(max_length=100, verbose_name="Senha")
     telefone = models.CharField(
-        max_length=20, 
+        max_length=20,
         validators=[phone_validator],
-        blank=True, 
+        blank=True,
         null=True,
         verbose_name="Telefone"
     )
     
+    @property
+    def id(self):
+        return self.id_usuario
+
+    # Campos obrigatórios para AbstractBaseUser / Django Admin
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+
+    objects = UsuarioManager()
+
+    USERNAME_FIELD = 'matricula'   # campo usado para login
+    REQUIRED_FIELDS = ['cpf']      # campos obrigatórios ao criar superusuário
+
     class Meta:
         db_table = 'Usuario'
         verbose_name = "Usuário"
         verbose_name_plural = "Usuários"
-    
+
     def __str__(self):
         return f"{self.nome_usuario} - {self.matricula}"
 

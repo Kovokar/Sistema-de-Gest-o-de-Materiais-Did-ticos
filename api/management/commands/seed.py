@@ -15,37 +15,28 @@ class Command(BaseCommand):
         self.stdout.write(self.style.SUCCESS("Perfis criados ✅"))
 
         # Criando Usuários
+        usuarios_data = [
+            {"matricula": "2023001", "cpf": "123.456.789-00", "nome_usuario": "João Silva", "telefone": "(11) 91234-5678", "id_perfil": prof},
+            {"matricula": "2023002", "cpf": "987.654.321-00", "nome_usuario": "Maria Oliveira", "telefone": "(11) 99876-5432", "id_perfil": coord},
+            {"matricula": "2023003", "cpf": "111.222.333-44", "nome_usuario": "Carlos Souza", "telefone": "(21) 93456-7890", "id_perfil": admin},
+        ]
+
         usuarios = []
-        usuarios.append(
-            Usuario.objects.get_or_create(
-                matricula="2023001",
-                cpf="123.456.789-00",
-                nome_usuario="João Silva",
-                telefone="(11) 91234-5678",
-                senha="senha123",
-                id_perfil=prof,
-            )[0]
-        )
-        usuarios.append(
-            Usuario.objects.get_or_create(
-                matricula="2023002",
-                cpf="987.654.321-00",
-                nome_usuario="Maria Oliveira",
-                telefone="(11) 99876-5432",
-                senha="senha123",
-                id_perfil=coord,
-            )[0]
-        )
-        usuarios.append(
-            Usuario.objects.get_or_create(
-                matricula="2023003",
-                cpf="111.222.333-44",
-                nome_usuario="Carlos Souza",
-                telefone="(21) 93456-7890",
-                senha="senha123",
-                id_perfil=admin,
-            )[0]
-        )
+        for data in usuarios_data:
+            user, created = Usuario.objects.get_or_create(
+                matricula=data["matricula"],
+                defaults={
+                    "cpf": data["cpf"],
+                    "nome_usuario": data["nome_usuario"],
+                    "telefone": data["telefone"],
+                    "id_perfil": data["id_perfil"],
+                }
+            )
+            if created:
+                user.set_password("senha123")  # gera hash seguro
+                user.save()
+            usuarios.append(user)
+
         self.stdout.write(self.style.SUCCESS("Usuários criados ✅"))
 
         # Criando Etapas Escolares
