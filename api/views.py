@@ -61,6 +61,7 @@ class PerfilViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Perfil model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = Perfil.objects.all()
     serializer_class = PerfilSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -211,6 +212,7 @@ class EtapaEscolarViewSet(viewsets.ModelViewSet):
     """
     ViewSet for EtapaEscolar model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = EtapaEscolar.objects.all()
     serializer_class = EtapaEscolarSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -255,6 +257,7 @@ class DisciplinaViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Disciplina model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = Disciplina.objects.all()
     serializer_class = DisciplinaSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -299,6 +302,7 @@ class StatusEnvioViewSet(viewsets.ModelViewSet):
     """
     ViewSet for StatusEnvio model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = StatusEnvio.objects.all()
     serializer_class = StatusEnvioSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -414,6 +418,7 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
     """
     ViewSet for EnvioMaterial model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = EnvioMaterial.objects.select_related(
         'id_etapa', 'id_disciplina', 'id_usuario', 'id_status'
     ).all()
@@ -434,8 +439,9 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         """
         Return different serializers for different actions
         """
-        if self.action == 'list':
-            return EnvioMaterialResumoSerializer
+        # if self.action == 'list':
+        #     print("List action - using resumo serializer")
+        #     return EnvioMaterialResumoSerializer
         return EnvioMaterialSerializer
     
     @extend_schema(
@@ -598,6 +604,7 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
 # app/views.py
 
 class FileUploadView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         serializer = FileUploadSerializer(data=request.data)
         if serializer.is_valid():
