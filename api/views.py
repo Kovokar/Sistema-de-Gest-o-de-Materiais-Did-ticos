@@ -170,6 +170,14 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         return Response({'error': 'perfil_id parameter is required'}, 
                         status=status.HTTP_400_BAD_REQUEST)
 
+    @action(detail=False, methods=['get'], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        """
+        Retorna as informações do usuário autenticado
+        """
+        usuario = request.user  # Usuário autenticado via token/session
+        serializer = self.get_serializer(usuario)
+        return Response(serializer.data)
 
 @extend_schema_view(
     list=extend_schema(
