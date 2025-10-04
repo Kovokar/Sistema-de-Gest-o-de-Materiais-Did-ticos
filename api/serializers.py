@@ -38,12 +38,12 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             'id_usuario', 'id_perfil', 'perfil_nome', 'nome_usuario', 
-            'matricula', 'cpf', 'senha', 'telefone'
+            'matricula', 'cpf', 'password', 'telefone'
         ]
         extra_kwargs = {
-            'senha': {
+            'password': {
                 'write_only': True,
-                'help_text': 'Senha do usuário (apenas escrita)'
+                'help_text': 'Password do usuário (apenas escrita)'
             },
             'cpf': {
                 'help_text': 'CPF no formato XXX.XXX.XXX-XX'

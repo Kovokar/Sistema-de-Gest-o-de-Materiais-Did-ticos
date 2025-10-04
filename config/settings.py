@@ -12,7 +12,7 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from decouple import config # use get envs
 from pathlib import Path
 import os
-from django.core.management.utils import get_random_secret_key
+from datetime import timedelta
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -53,6 +53,15 @@ INSTALLED_APPS = [
 ]
 
 AUTH_USER_MODEL = 'api.Usuario'
+
+SIMPLE_JWT = {
+    "USER_ID_FIELD": "id_usuario",   # usa o campo real do banco
+    "USER_ID_CLAIM": "user_id",
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),   # token de acesso dura 15 min
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      # token de refresh dura 1 dia
+    "ROTATE_REFRESH_TOKENS": False,                   # se True, gera novo refresh token a cada uso
+    "BLACKLIST_AFTER_ROTATION": True,                 # só funciona se ROTATE_REFRESH_TOKENS=True
+}
 
 
 MIDDLEWARE = [

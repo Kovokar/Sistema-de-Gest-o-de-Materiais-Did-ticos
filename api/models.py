@@ -107,11 +107,6 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         null=True,
         verbose_name="Telefone"
     )
-    
-    @property
-    def id(self):
-        return self.id_usuario
-
     # Campos obrigatórios para AbstractBaseUser / Django Admin
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)

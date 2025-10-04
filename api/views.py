@@ -22,7 +22,8 @@ class HelloView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        return Response({'message': f'Olá, {request.user.username}!'})
+        print(request.user)
+        return Response({'message': f'Olá, {request.user}!'})
 
 
 @extend_schema_view(
@@ -296,8 +297,11 @@ class StatusEnvioViewSet(viewsets.ModelViewSet):
     """
     ViewSet for StatusEnvio model with full CRUD operations
     """
+    print("0000000")
     permission_classes = [IsAuthenticated]
+    print("11111")
     queryset = StatusEnvio.objects.all()
+    print("efdweofdoi")
     serializer_class = StatusEnvioSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['descricao_status']
