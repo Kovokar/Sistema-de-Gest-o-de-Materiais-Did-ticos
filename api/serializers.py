@@ -38,12 +38,12 @@ class UsuarioSerializer(serializers.ModelSerializer):
         model = Usuario
         fields = [
             'id_usuario', 'id_perfil', 'perfil_nome', 'nome_usuario', 
-            'matricula', 'cpf', 'senha', 'telefone'
+            'matricula', 'cpf', 'password', 'telefone'
         ]
         extra_kwargs = {
-            'senha': {
+            'password': {
                 'write_only': True,
-                'help_text': 'Senha do usuário (apenas escrita)'
+                'help_text': 'Password do usuário (apenas escrita)'
             },
             'cpf': {
                 'help_text': 'CPF no formato XXX.XXX.XXX-XX'
@@ -156,9 +156,10 @@ class EnvioMaterialSerializer(serializers.ModelSerializer):
 # Additional serializers for specific use cases
 class UsuarioCreateSerializer(serializers.ModelSerializer):
     """
-    Serializer específico para criação de usuários
-    Inclui validações adicionais e hash de senha
+    Serializer para criação de usuários
+    Inclui validações adicionais e hash seguro de senha
     """
+    senha = serializers.CharField(write_only=True, help_text="Senha do usuário")
     confirm_senha = serializers.CharField(write_only=True, help_text="Confirmação da senha")
     
     class Meta:
@@ -174,14 +175,16 @@ class UsuarioCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         if attrs.get('senha') != attrs.get('confirm_senha'):
             raise serializers.ValidationError("As senhas não coincidem")
-        attrs.pop('confirm_senha', None)
         return attrs
-    
+
     def create(self, validated_data):
-        # Hash password before saving
-        # from django.contrib.auth.hashers import make_password
-        # validated_data['senha'] = make_password(validated_data['senha'])
-        return super().create(validated_data)
+        senha = validated_data.pop('senha')
+        validated_data.pop('confirm_senha', None)
+
+        user = Usuario(**validated_data)
+        user.set_password(senha) 
+        user.save()
+        return user
 
 
 class EnvioMaterialResumoSerializer(serializers.ModelSerializer):

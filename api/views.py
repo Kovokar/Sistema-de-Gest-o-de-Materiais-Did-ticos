@@ -11,9 +11,19 @@ from drf_spectacular.openapi import OpenApiTypes
 from django.core.mail import EmailMessage
 from .serializers import FileUploadSerializer
 from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+
 
 from .models import *
 from .serializers import *
+
+
+class HelloView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        print(request.user)
+        return Response({'message': f'Olá, {request.user}!'})
 
 
 @extend_schema_view(
@@ -52,6 +62,7 @@ class PerfilViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Perfil model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = Perfil.objects.all()
     serializer_class = PerfilSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -120,7 +131,7 @@ class PerfilViewSet(viewsets.ModelViewSet):
 )
 class UsuarioViewSet(viewsets.ModelViewSet):
     """
-    ViewSet for Usuario model with full CRUD operations
+    ViewSet para o modelo de usuário
     """
     queryset = Usuario.objects.select_related('id_perfil').all()
     serializer_class = UsuarioSerializer
@@ -129,15 +140,12 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     ordering_fields = ['id_usuario', 'nome_usuario', 'matricula']
     ordering = ['id_usuario']
     filterset_fields = ['id_perfil']
-    
+
     def get_serializer_class(self):
-        """
-        Return different serializers for different actions
-        """
         if self.action == 'create':
             return UsuarioCreateSerializer
         return UsuarioSerializer
-    
+
     @extend_schema(
         summary="Obter usuários por perfil",
         description="Retorna uma lista de usuários filtrados por ID do perfil.",
@@ -154,16 +162,13 @@ class UsuarioViewSet(viewsets.ModelViewSet):
     )
     @action(detail=False, methods=['get'])
     def by_perfil(self, request):
-        """
-        Get users by profile ID
-        """
         perfil_id = request.query_params.get('perfil_id')
         if perfil_id:
             usuarios = self.queryset.filter(id_perfil=perfil_id)
             serializer = self.get_serializer(usuarios, many=True)
             return Response(serializer.data)
         return Response({'error': 'perfil_id parameter is required'}, 
-                       status=status.HTTP_400_BAD_REQUEST)
+                        status=status.HTTP_400_BAD_REQUEST)
 
 
 @extend_schema_view(
@@ -202,6 +207,7 @@ class EtapaEscolarViewSet(viewsets.ModelViewSet):
     """
     ViewSet for EtapaEscolar model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = EtapaEscolar.objects.all()
     serializer_class = EtapaEscolarSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -246,6 +252,7 @@ class DisciplinaViewSet(viewsets.ModelViewSet):
     """
     ViewSet for Disciplina model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = Disciplina.objects.all()
     serializer_class = DisciplinaSerializer
     filter_backends = [SearchFilter, OrderingFilter]
@@ -290,7 +297,11 @@ class StatusEnvioViewSet(viewsets.ModelViewSet):
     """
     ViewSet for StatusEnvio model with full CRUD operations
     """
+    print("0000000")
+    permission_classes = [IsAuthenticated]
+    print("11111")
     queryset = StatusEnvio.objects.all()
+    print("efdweofdoi")
     serializer_class = StatusEnvioSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['descricao_status']
@@ -405,6 +416,7 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
     """
     ViewSet for EnvioMaterial model with full CRUD operations
     """
+    permission_classes = [IsAuthenticated]
     queryset = EnvioMaterial.objects.select_related(
         'id_etapa', 'id_disciplina', 'id_usuario', 'id_status'
     ).all()
@@ -425,8 +437,9 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         """
         Return different serializers for different actions
         """
-        if self.action == 'list':
-            return EnvioMaterialResumoSerializer
+        # if self.action == 'list':
+        #     print("List action - using resumo serializer")
+        #     return EnvioMaterialResumoSerializer
         return EnvioMaterialSerializer
     
     @extend_schema(
@@ -589,6 +602,7 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
 # app/views.py
 
 class FileUploadView(APIView):
+    permission_classes = [IsAuthenticated]
     def post(self, request, *args, **kwargs):
         serializer = FileUploadSerializer(data=request.data)
         if serializer.is_valid():
