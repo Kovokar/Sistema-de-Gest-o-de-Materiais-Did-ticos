@@ -2,6 +2,8 @@
 from django.db import models
 from django.core.validators import RegexValidator
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin, BaseUserManager
+from django.utils import timezone
+
 
 
 class BaseModel(models.Model):
@@ -206,13 +208,14 @@ class EnvioMaterial(BaseModel):
         StatusEnvio, 
         on_delete=models.CASCADE,
         db_column='Id_Status',
-        verbose_name="Status"
+        verbose_name="Status",
+        default=1,
     )
     mes_referencia = models.IntegerField(
         choices=MONTH_CHOICES,
         verbose_name="Mês de Referência"
     )
-    ano_referencia = models.IntegerField(verbose_name="Ano de Referência")
+    ano_referencia = models.IntegerField(verbose_name="Ano de Referência", default=timezone.now().year)
     observacoes_gerencia = models.TextField(
         blank=True, 
         null=True,
@@ -249,7 +252,6 @@ class EnvioMaterial(BaseModel):
         verbose_name = "Envio de Material"
         verbose_name_plural = "Envios de Material"
         # Add unique constraint to prevent duplicate submissions
-        unique_together = ['id_etapa', 'id_disciplina', 'id_usuario', 'mes_referencia', 'ano_referencia']
     
     def __str__(self):
         return f"Envio {self.id_envio} - {self.id_disciplina} - {self.mes_referencia}/{self.ano_referencia}"
