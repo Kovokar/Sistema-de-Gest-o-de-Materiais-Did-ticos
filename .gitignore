@@ -22,6 +22,7 @@ env/
 # IDE-specific files (e.g., PyCharm)
 .idea/
 *.iml
+.vscode/
 
 # Operating System files
 .DS_Store
@@ -37,3 +38,4 @@ dist/
 
 # Others
 rand/
+
