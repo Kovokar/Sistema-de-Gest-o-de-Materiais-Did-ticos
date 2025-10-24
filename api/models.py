@@ -24,7 +24,7 @@ class Perfil(BaseModel):
     """
     Model representing user profiles/roles
     """
-    id_perfil = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     nome_perfil = models.CharField(max_length=100, verbose_name="Nome do Perfil")
     
     class Meta:
@@ -87,7 +87,7 @@ class Usuario(AbstractBaseUser, PermissionsMixin):
         message="Telefone deve estar no formato (XX) XXXXX-XXXX"
     )
 
-    id_usuario = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     id_perfil = models.ForeignKey(
         'Perfil',
         on_delete=models.CASCADE,
@@ -131,7 +131,7 @@ class EtapaEscolar(BaseModel):
     """
     Model representing school stages/grades
     """
-    id_etapa = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     nome_etapa = models.CharField(max_length=100, verbose_name="Nome da Etapa")
     
     class Meta:
@@ -147,7 +147,7 @@ class Disciplina(BaseModel):
     """
     Model representing academic subjects
     """
-    id_disciplina = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     nome_disciplina = models.CharField(max_length=100, verbose_name="Nome da Disciplina")
     
     class Meta:
@@ -163,7 +163,7 @@ class StatusEnvio(BaseModel):
     """
     Model representing submission status
     """
-    id_status = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     descricao_status = models.CharField(max_length=100, verbose_name="Descrição do Status")
     
     class Meta:
@@ -185,7 +185,7 @@ class EnvioMaterial(BaseModel):
         (9, 'Setembro'), (10, 'Outubro'), (11, 'Novembro'), (12, 'Dezembro')
     ]
     
-    id_envio = models.AutoField(primary_key=True)
+    id = models.AutoField(primary_key=True)
     id_etapa = models.ForeignKey(
         EtapaEscolar, 
         on_delete=models.CASCADE,
@@ -254,7 +254,7 @@ class EnvioMaterial(BaseModel):
         # Add unique constraint to prevent duplicate submissions
     
     def __str__(self):
-        return f"Envio {self.id_envio} - {self.id_disciplina} - {self.mes_referencia}/{self.ano_referencia}"
+        return f"Envio {self.id} - {self.id_disciplina} - {self.mes_referencia}/{self.ano_referencia}"
     
     @property
     def mes_referencia_display(self):

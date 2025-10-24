@@ -15,7 +15,7 @@ class PerfilSerializer(serializers.ModelSerializer):
     """
     class Meta:
         model = Perfil
-        fields = ['id_perfil', 'nome_perfil']
+        fields = ['id', 'nome_perfil']
 
 
 class UsuarioSerializer(serializers.ModelSerializer):
@@ -65,12 +65,12 @@ class EtapaEscolarSerializer(serializers.ModelSerializer):
     Serializer para o modelo EtapaEscolar
     
     Campos:
-    - id_etapa: ID único da etapa escolar
+    - id: ID único da etapa escolar
     - nome_etapa: Nome da etapa/série escolar
     """
     class Meta:
         model = EtapaEscolar
-        fields = ['id_etapa', 'nome_etapa']
+        fields = ['id', 'nome_etapa']
 
 
 class DisciplinaSerializer(serializers.ModelSerializer):
@@ -78,12 +78,12 @@ class DisciplinaSerializer(serializers.ModelSerializer):
     Serializer para o modelo Disciplina
     
     Campos:
-    - id_disciplina: ID único da disciplina
+    - id: ID único da disciplina
     - nome_disciplina: Nome da disciplina acadêmica
     """
     class Meta:
         model = Disciplina
-        fields = ['id_disciplina', 'nome_disciplina']
+        fields = ['id', 'nome_disciplina']
 
 
 class StatusEnvioSerializer(serializers.ModelSerializer):
@@ -91,12 +91,12 @@ class StatusEnvioSerializer(serializers.ModelSerializer):
     Serializer para o modelo StatusEnvio
     
     Campos:
-    - id_status: ID único do status
+    - id: ID único do status
     - descricao_status: Descrição do status de envio
     """
     class Meta:
         model = StatusEnvio
-        fields = ['id_status', 'descricao_status']
+        fields = ['id', 'descricao_status']
 
 
 class EnvioMaterialSerializer(serializers.ModelSerializer):
@@ -134,7 +134,7 @@ class EnvioMaterialSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnvioMaterial
         fields = [
-            'id_envio', 'id_etapa', 'etapa_nome', 'id_disciplina', 'disciplina_nome',
+            'id', 'id_etapa', 'etapa_nome', 'id_disciplina', 'disciplina_nome',
             'id_usuario', 'usuario_nome', 'id_status', 'status_descricao',
             'mes_referencia', 'mes_referencia_display', 'ano_referencia',
             'observacoes_gerencia', 'data_envio_escola', 'data_envio_see',
@@ -200,7 +200,7 @@ class EnvioMaterialResumoSerializer(serializers.ModelSerializer):
     class Meta:
         model = EnvioMaterial
         fields = [
-            'id_envio', 'etapa_nome', 'disciplina_nome', 'usuario_nome',
+            'id', 'etapa_nome', 'disciplina_nome', 'usuario_nome',
             'status_descricao', 'mes_referencia', 'ano_referencia',
             'data_envio_escola', 'data_limite_envio'
         ]

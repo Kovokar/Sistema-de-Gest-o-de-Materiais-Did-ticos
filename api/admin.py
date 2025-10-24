@@ -11,16 +11,16 @@ class PerfilAdmin(admin.ModelAdmin):
     """
     Admin configuration for Perfil model
     """
-    list_display = ['id_perfil', 'nome_perfil', 'total_usuarios']
-    list_display_links = ['id_perfil', 'nome_perfil']
+    list_display = ['id', 'nome_perfil', 'total_usuarios']
+    list_display_links = ['id', 'nome_perfil']
     search_fields = ['nome_perfil']
-    ordering = ['id_perfil']
+    ordering = ['id']
     
     def total_usuarios(self, obj):
         """Display total users for this profile"""
         count = obj.usuario_set.count()
         if count > 0:
-            url = reverse('admin:material_didatico_usuario_changelist') + f'?id_perfil__exact={obj.id_perfil}'
+            url = reverse('admin:material_didatico_usuario_changelist') + f'?id__exact={obj.id}'
             return format_html('<a href="{}">{} usuários</a>', url, count)
         return '0 usuários'
     
@@ -33,14 +33,14 @@ class UsuarioAdmin(admin.ModelAdmin):
     Admin configuration for Usuario model
     """
     list_display = [
-        'id_usuario', 'nome_usuario', 'matricula', 'cpf', 
+        'id', 'nome_usuario', 'matricula', 'cpf', 
         'get_perfil_nome', 'telefone', 'total_envios'
     ]
-    list_display_links = ['id_usuario', 'nome_usuario']
+    list_display_links = ['id', 'nome_usuario']
     list_filter = ['id_perfil', 'id_perfil__nome_perfil']
     search_fields = ['nome_usuario', 'matricula', 'cpf', 'id_perfil__nome_perfil']
     ordering = ['nome_usuario']
-    readonly_fields = ['id_usuario']
+    readonly_fields = ['id']
     
     fieldsets = (
         ('Informações Básicas', {
@@ -65,7 +65,7 @@ class UsuarioAdmin(admin.ModelAdmin):
         """Display total submissions for this user"""
         count = obj.enviomaterial_set.count()
         if count > 0:
-            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id_usuario__exact={obj.id_usuario}'
+            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id__exact={obj.id}'
             return format_html('<a href="{}">{} envios</a>', url, count)
         return '0 envios'
     
@@ -77,16 +77,16 @@ class EtapaEscolarAdmin(admin.ModelAdmin):
     """
     Admin configuration for EtapaEscolar model
     """
-    list_display = ['id_etapa', 'nome_etapa', 'total_envios']
-    list_display_links = ['id_etapa', 'nome_etapa']
+    list_display = ['id', 'nome_etapa', 'total_envios']
+    list_display_links = ['id', 'nome_etapa']
     search_fields = ['nome_etapa']
-    ordering = ['id_etapa']
+    ordering = ['id']
     
     def total_envios(self, obj):
         """Display total submissions for this school stage"""
         count = obj.enviomaterial_set.count()
         if count > 0:
-            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id_etapa__exact={obj.id_etapa}'
+            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id__exact={obj.id}'
             return format_html('<a href="{}">{} envios</a>', url, count)
         return '0 envios'
     
@@ -98,8 +98,8 @@ class DisciplinaAdmin(admin.ModelAdmin):
     """
     Admin configuration for Disciplina model
     """
-    list_display = ['id_disciplina', 'nome_disciplina', 'total_envios']
-    list_display_links = ['id_disciplina', 'nome_disciplina']
+    list_display = ['id', 'nome_disciplina', 'total_envios']
+    list_display_links = ['id', 'nome_disciplina']
     search_fields = ['nome_disciplina']
     ordering = ['nome_disciplina']
     
@@ -107,7 +107,7 @@ class DisciplinaAdmin(admin.ModelAdmin):
         """Display total submissions for this subject"""
         count = obj.enviomaterial_set.count()
         if count > 0:
-            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id_disciplina__exact={obj.id_disciplina}'
+            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id__exact={obj.id}'
             return format_html('<a href="{}">{} envios</a>', url, count)
         return '0 envios'
     
@@ -119,16 +119,16 @@ class StatusEnvioAdmin(admin.ModelAdmin):
     """
     Admin configuration for StatusEnvio model
     """
-    list_display = ['id_status', 'descricao_status', 'total_envios', 'status_color']
-    list_display_links = ['id_status', 'descricao_status']
+    list_display = ['id', 'descricao_status', 'total_envios', 'status_color']
+    list_display_links = ['id', 'descricao_status']
     search_fields = ['descricao_status']
-    ordering = ['id_status']
+    ordering = ['id']
     
     def total_envios(self, obj):
         """Display total submissions with this status"""
         count = obj.enviomaterial_set.count()
         if count > 0:
-            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id_status__exact={obj.id_status}'
+            url = reverse('admin:material_didatico_enviomaterial_changelist') + f'?id__exact={obj.id}'
             return format_html('<a href="{}">{} envios</a>', url, count)
         return '0 envios'
     
@@ -142,7 +142,7 @@ class StatusEnvioAdmin(admin.ModelAdmin):
             3: '#dc3545',  # Rejected - Red
             4: '#17a2b8',  # In Review - Blue
         }
-        color = color_map.get(obj.id_status, '#6c757d')  # Default gray
+        color = color_map.get(obj.id, '#6c757d')  # Default gray
         return format_html(
             '<span style="background-color: {}; color: white; padding: 3px 8px; border-radius: 3px;">{}</span>',
             color, obj.descricao_status
@@ -157,12 +157,12 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
     Admin configuration for EnvioMaterial model
     """
     list_display = [
-        'id_envio', 'get_usuario_nome', 'get_disciplina_nome', 
+        'id', 'get_usuario_nome', 'get_disciplina_nome', 
         'get_etapa_nome', 'mes_referencia', 'ano_referencia',
         'get_status_display', 'data_envio_escola', 'data_limite_envio',
         'is_overdue'
     ]
-    list_display_links = ['id_envio']
+    list_display_links = ['id']
     list_filter = [
         'ano_referencia', 'mes_referencia', 'id_status',
         'id_etapa', 'id_disciplina', 'data_envio_escola'
@@ -172,8 +172,8 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
         'id_disciplina__nome_disciplina', 'id_etapa__nome_etapa',
         'observacoes_gerencia'
     ]
-    ordering = ['-ano_referencia', '-mes_referencia', '-id_envio']
-    readonly_fields = ['id_envio', 'mes_referencia_display']
+    ordering = ['-ano_referencia', '-mes_referencia', '-id']
+    readonly_fields = ['id', 'mes_referencia_display']
     
     fieldsets = (
         ('Informações Básicas', {
@@ -205,19 +205,19 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
     
     def get_disciplina_nome(self, obj):
         """Display subject name"""
-        return obj.id_disciplina.nome_disciplina if obj.id_disciplina else '-'
+        return obj.id.nome_disciplina if obj.id else '-'
     get_disciplina_nome.short_description = 'Disciplina'
-    get_disciplina_nome.admin_order_field = 'id_disciplina__nome_disciplina'
+    get_disciplina_nome.admin_order_field = 'id__nome_disciplina'
     
     def get_etapa_nome(self, obj):
         """Display school stage name"""
-        return obj.id_etapa.nome_etapa if obj.id_etapa else '-'
+        return obj.id.nome_etapa if obj.id else '-'
     get_etapa_nome.short_description = 'Etapa'
-    get_etapa_nome.admin_order_field = 'id_etapa__nome_etapa'
+    get_etapa_nome.admin_order_field = 'id__nome_etapa'
     
     def get_status_display(self, obj):
         """Display status with color coding"""
-        if not obj.id_status:
+        if not obj.id:
             return '-'
         
         color_map = {
@@ -226,15 +226,15 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
             3: '#dc3545',  # Rejected
             4: '#17a2b8',  # In Review
         }
-        color = color_map.get(obj.id_status.id_status, '#6c757d')
+        color = color_map.get(obj.id.id, '#6c757d')
         
         return format_html(
             '<span style="background-color: {}; color: white; padding: 2px 6px; border-radius: 3px; font-size: 11px;">{}</span>',
-            color, obj.id_status.descricao_status
+            color, obj.id.descricao_status
         )
     
     get_status_display.short_description = 'Status'
-    get_status_display.admin_order_field = 'id_status__descricao_status'
+    get_status_display.admin_order_field = 'id__descricao_status'
     
     def is_overdue(self, obj):
         """Check if submission is overdue"""
@@ -270,9 +270,9 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
     def mark_as_approved(self, request, queryset):
         """Mark selected submissions as approved"""
         # Assuming status ID 2 is "Approved"
-        approved_status = StatusEnvio.objects.filter(id_status=2).first()
+        approved_status = StatusEnvio.objects.filter(id=2).first()
         if approved_status:
-            updated = queryset.update(id_status=approved_status)
+            updated = queryset.update(id=approved_status)
             self.message_user(request, f'{updated} envios marcados como aprovados.')
         else:
             self.message_user(request, 'Status "Aprovado" não encontrado.', level='ERROR')
@@ -282,9 +282,9 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
     def mark_as_rejected(self, request, queryset):
         """Mark selected submissions as rejected"""
         # Assuming status ID 3 is "Rejected"
-        rejected_status = StatusEnvio.objects.filter(id_status=3).first()
+        rejected_status = StatusEnvio.objects.filter(id=3).first()
         if rejected_status:
-            updated = queryset.update(id_status=rejected_status)
+            updated = queryset.update(id=rejected_status)
             self.message_user(request, f'{updated} envios marcados como rejeitados.')
         else:
             self.message_user(request, 'Status "Rejeitado" não encontrado.', level='ERROR')
@@ -294,9 +294,9 @@ class EnvioMaterialAdmin(admin.ModelAdmin):
     def mark_as_pending(self, request, queryset):
         """Mark selected submissions as pending"""
         # Assuming status ID 1 is "Pending"
-        pending_status = StatusEnvio.objects.filter(id_status=1).first()
+        pending_status = StatusEnvio.objects.filter(id=1).first()
         if pending_status:
-            updated = queryset.update(id_status=pending_status)
+            updated = queryset.update(id=pending_status)
             self.message_user(request, f'{updated} envios marcados como pendentes.')
         else:
             self.message_user(request, 'Status "Pendente" não encontrado.', level='ERROR')

@@ -55,7 +55,7 @@ INSTALLED_APPS = [
 AUTH_USER_MODEL = 'api.Usuario'
 
 SIMPLE_JWT = {
-    "USER_ID_FIELD": "id_usuario",   # usa o campo real do banco
+    "USER_ID_FIELD": "id",   # usa o campo real do banco
     "USER_ID_CLAIM": "user_id",
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),   # token de acesso dura 15 min
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),      # token de refresh dura 1 dia
