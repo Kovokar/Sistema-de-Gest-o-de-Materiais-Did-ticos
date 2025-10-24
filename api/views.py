@@ -178,6 +178,52 @@ class UsuarioViewSet(viewsets.ModelViewSet):
         usuario = request.user  # Usuário autenticado via token/session
         serializer = self.get_serializer(usuario)
         return Response(serializer.data)
+    
+    @extend_schema(
+        summary="Criar usuário com perfil de Professor automaticamente",
+        description=(
+            "Cria um novo usuário atribuindo automaticamente o perfil de Professor. "
+            "Não é necessário enviar o campo `id_perfil`, pois ele é definido pelo sistema."
+        ),
+        tags=["Usuários"],
+        request=UsuarioCreateSerializer,
+        responses={
+            201: UsuarioSerializer,
+            400: OpenApiTypes.OBJECT,
+        },
+        examples=[
+            {
+                "matricula": "3456789",
+                "cpf": "987.654.321-00",
+                "nome_usuario": "Professor João",
+                "senha": "1234",
+                "confirm_senha": "1234",
+                "telefone": "(11) 99999-8888"
+            }
+        ],
+    )
+    @action(detail=False, methods=['post'], url_path='create-professor')
+    def create_professor(self, request):
+        """
+        Cria um novo usuário com perfil de professor automaticamente.
+        """
+        try:
+            perfil_professor = Perfil.objects.get(nome_perfil__iexact='professor')
+        except Perfil.DoesNotExist:
+            return Response(
+                {'error': 'Perfil de professor não encontrado.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Copia os dados do request e força o id_perfil do professor
+        data = request.data.copy()
+        data['id_perfil'] = perfil_professor.id
+
+        serializer = UsuarioCreateSerializer(data=data)
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(UsuarioSerializer(user).data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @extend_schema_view(
     list=extend_schema(
