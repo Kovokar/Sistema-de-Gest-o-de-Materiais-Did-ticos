@@ -6,7 +6,7 @@ from rest_framework.filters import SearchFilter, OrderingFilter
 from django_filters.rest_framework import DjangoFilterBackend
 from django_filters import rest_framework as filters
 from django.db.models import Count, Q
-from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample
+from drf_spectacular.utils import extend_schema, extend_schema_view, OpenApiParameter, OpenApiExample, OpenApiResponse
 from drf_spectacular.openapi import OpenApiTypes
 from django.core.mail import EmailMessage
 from .serializers import FileUploadSerializer
@@ -479,10 +479,136 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         'id_etapa__nome_etapa', 'observacoes_gerencia'
     ]
     ordering_fields = [
-        'id_envio', 'mes_referencia', 'ano_referencia', 
+        'id', 'mes_referencia', 'ano_referencia', 
         'data_envio_escola', 'data_limite_envio'
     ]
-    ordering = ['-id_envio']
+    ordering = ['-id']
+    
+    @extend_schema(
+        summary="Criar envio de material",
+        description=(
+            "Cria um novo registro de envio de material didático.\n\n"
+            "- Se `mes_referencia` não for informado, o sistema usará o mês atual.\n"
+            "- `data_limite_envio` deve ser enviada no formato **DD-MM-YYYY**."
+        ),
+        request=EnvioMaterialSerializer,
+        responses={201: EnvioMaterialSerializer},
+        tags=["Envio de Materiais"]
+    )
+    @action(detail=False, methods=['post'])
+    def perform_create(self, serializer):
+        """
+        Preenche automaticamente mês/ano se não forem enviados.
+        """
+        now = timezone.now()
+
+        # Se o mês não foi informado, pega o mês e ano atuais
+        mes = serializer.validated_data.get('mes_referencia') or now.month
+        ano = serializer.validated_data.get('ano_referencia') or now.year
+
+        serializer.save(
+            mes_referencia=mes,
+            ano_referencia=ano,
+            data_envio_formador=datetime.now().date()
+        )
+    
+    @extend_schema(
+    summary="Validar ou rejeitar um envio de material",
+    description=(
+        "Define o status do envio como **Validado** ou **Rejeitado** com base no campo `validado`. "
+        "Registra também a observação da gerência e a data da validação."
+    ),
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "validado": {"type": "boolean", "example": True},
+                "observacoes_gerencia": {"type": "string", "example": "Material revisado e aprovado."}
+            },
+            "required": ["validado"]
+        }
+    },
+    responses={200: EnvioMaterialSerializer, 400: OpenApiResponse(description="Parâmetro inválido")},
+    tags=["Envios de Material"]
+)
+    @action(detail=True, methods=['post'])
+    def validar(self, request, pk=None):
+        """
+        Valida ou rejeita um envio de material.
+
+        Corpo esperado:
+        {
+            "validado": true,
+            "observacoes_gerencia": "Comentário opcional"
+        }
+        """
+        try:
+            envio = EnvioMaterial.objects.get(pk=pk)
+        except EnvioMaterial.DoesNotExist:
+            return Response({"error": "Envio não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        validado = request.data.get("validado")
+        observacoes = request.data.get("observacoes_gerencia", "")
+
+        if validado is None:
+            return Response(
+                {"error": "O campo 'validado' é obrigatório (true/false)."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        status_dict = {s['descricao_status']: s['id'] for s in StatusEnvio.objects.filter(deleted_at__isnull=True).values('id', 'descricao_status')}
+
+        # Define status (1 = pendente, 2 = aprovado, 3 = rejeitado)
+        envio.id_status_id = status_dict['Validado'] if validado else status_dict['Rejeitado']
+        envio.observacoes_gerencia = observacoes
+        envio.data_validacao_gerencia = datetime.now().date()
+        envio.save()
+
+        serializer = EnvioMaterialSerializer(envio)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+    
+    @extend_schema(
+    summary="Mudar status de um envio de material",
+    description=(
+        "Altera o status do envio para o `status_id` fornecido. "
+        "Também permite atualizar a observação da gerência."
+    ),
+    request={
+        "application/json": {
+            "type": "object",
+            "properties": {
+                "status_id": {"type": "integer", "example": 2},
+                "observacoes_gerencia": {"type": "string", "example": "Atualizando status manualmente."}
+            },
+            "required": ["status_id"]
+        }
+    },
+    responses={200: EnvioMaterialSerializer, 400: OpenApiResponse(description="Parâmetro inválido")},
+    tags=["Envios de Material"]
+)
+    @action(detail=True, methods=['post'])
+    def mudar_status(self, request, pk=None):
+        """
+        Muda o status de um envio de material para o status_id fornecido.
+        """
+        try:
+            envio = EnvioMaterial.objects.get(pk=pk)
+        except EnvioMaterial.DoesNotExist:
+            return Response({"error": "Envio não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        try:
+            status_obj = StatusEnvio.objects.get(pk=request.data.get("status_id"))
+        except StatusEnvio.DoesNotExist:
+            return Response({"error": "Status não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+
+        observacoes = request.data.get("observacoes_gerencia", "")
+        envio.observacoes_gerencia = observacoes
+        envio.id_status = status_obj
+        envio.save()
+
+        serializer = EnvioMaterialSerializer(envio)
+        return Response(serializer.data, status=status.HTTP_200_OK)
     
     def get_serializer_class(self):
         """
@@ -493,20 +619,6 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         #     return EnvioMaterialResumoSerializer
         return EnvioMaterialSerializer
     
-    @extend_schema(
-        summary="Obter envios por usuário",
-        description="Retorna uma lista de envios de material filtrados por ID do usuário.",
-        parameters=[
-            OpenApiParameter(
-                name='user_id',
-                type=OpenApiTypes.INT,
-                description='ID do usuário para filtrar os envios',
-                required=True
-            )
-        ],
-        tags=["Envios de Material"],
-        responses={200: EnvioMaterialSerializer(many=True)}
-    )
     @action(detail=False, methods=['get'])
     def by_user(self, request):
         """
@@ -520,26 +632,6 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         return Response({'error': 'user_id parameter is required'}, 
                        status=status.HTTP_400_BAD_REQUEST)
     
-    @extend_schema(
-        summary="Obter envios por período",
-        description="Retorna uma lista de envios de material filtrados por mês e ano de referência.",
-        parameters=[
-            OpenApiParameter(
-                name='mes',
-                type=OpenApiTypes.INT,
-                description='Mês de referência (1-12)',
-                required=True
-            ),
-            OpenApiParameter(
-                name='ano',
-                type=OpenApiTypes.INT,
-                description='Ano de referência',
-                required=True
-            )
-        ],
-        tags=["Envios de Material"],
-        responses={200: EnvioMaterialSerializer(many=True)}
-    )
     @action(detail=False, methods=['get'])
     def by_period(self, request):
         """
@@ -558,19 +650,6 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         return Response({'error': 'mes and ano parameters are required'}, 
                        status=status.HTTP_400_BAD_REQUEST)
     
-    @extend_schema(
-        summary="Obter envios pendentes",
-        description="Retorna uma lista de envios de material com status pendente.",
-        parameters=[
-            OpenApiParameter(
-                name='status_id',
-                type=OpenApiTypes.INT,
-                description='ID do status considerado como pendente (padrão: 1)'
-            )
-        ],
-        tags=["Envios de Material"],
-        responses={200: EnvioMaterialSerializer(many=True)}
-    )
     @action(detail=False, methods=['get'])
     def pending(self, request):
         """
@@ -581,24 +660,6 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         serializer = EnvioMaterialSerializer(envios, many=True)
         return Response(serializer.data)
     
-    @extend_schema(
-        summary="Obter estatísticas de envios",
-        description="Retorna estatísticas dos envios por período.",
-        parameters=[
-            OpenApiParameter(
-                name='mes',
-                type=OpenApiTypes.INT,
-                description='Mês de referência (opcional)'
-            ),
-            OpenApiParameter(
-                name='ano',
-                type=OpenApiTypes.INT,
-                description='Ano de referência (opcional)'
-            )
-        ],
-        tags=["Envios de Material"],
-        responses={200: EnvioMaterialStatsSerializer()}
-    )
     @action(detail=False, methods=['get'])
     def stats(self, request):
         """
@@ -616,10 +677,10 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         
         # Count by status (assuming status IDs: 1=pending, 2=approved, 3=rejected)
         stats = queryset.aggregate(
-            total_envios=Count('id_envio'),
-            envios_pendentes=Count('id_envio', filter=Q(id_status=1)),
-            envios_aprovados=Count('id_envio', filter=Q(id_status=2)),
-            envios_rejeitados=Count('id_envio', filter=Q(id_status=3))
+            total_envios=Count('id'),
+            envios_pendentes=Count('id', filter=Q(id_status=1)),
+            envios_aprovados=Count('id', filter=Q(id_status=2)),
+            envios_rejeitados=Count('id', filter=Q(id_status=3))
         )
         
         stats['mes_referencia'] = int(mes) if mes else None
@@ -629,12 +690,6 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
         serializer.is_valid()
         return Response(serializer.data)
     
-    @extend_schema(
-        summary="Obter envios em atraso",
-        description="Retorna envios que passaram da data limite.",
-        tags=["Envios de Material"],
-        responses={200: EnvioMaterialSerializer(many=True)}
-    )
     @action(detail=False, methods=['get'])
     def overdue(self, request):
         """
