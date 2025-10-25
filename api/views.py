@@ -730,3 +730,111 @@ class FileUploadView(APIView):
                 return Response({"error": str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+class DashboardEnvioViewSet(viewsets.ViewSet):
+    """
+    Dashboard de estatísticas dos envios de material.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return EnvioMaterial.objects.select_related(
+            "id_disciplina", "id_status", "id_usuario"
+        )
+
+    # ============================
+    # DASHBOARD DO USUÁRIO LOGADO
+    # ============================
+    @extend_schema(
+        summary="Dashboard do usuário logado",
+        description="Retorna estatísticas completas (totais + listas) dos envios do usuário autenticado.",
+        tags=["Dashboard - Envios"],
+        responses={200: OpenApiResponse(description="Resumo dos envios do usuário logado.")}
+    )
+    @action(detail=False, methods=["get"], url_path="me")
+    def dashboard_me(self, request):
+        user = request.user
+        queryset = self.get_queryset().filter(id_usuario=user)
+
+        data = self._get_dashboard_data(queryset)
+        return Response(data, status=status.HTTP_200_OK)
+
+    # ============================
+    # DASHBOARD GERAL
+    # ============================
+    @extend_schema(
+        summary="Dashboard geral de envios",
+        description="Retorna estatísticas completas (totais + listas) de todos os envios do sistema.",
+        tags=["Dashboard - Envios"],
+        responses={200: OpenApiResponse(description="Resumo geral dos envios.")}
+    )
+    @action(detail=False, methods=["get"], url_path="geral")
+    def dashboard_geral(self, request):
+        queryset = self.get_queryset()
+        data = self._get_dashboard_data(queryset, request)
+        return Response(data, status=status.HTTP_200_OK)
+
+    # ============================
+    # FUNÇÃO AUXILIAR DE CÁLCULO
+    # ============================
+    def _get_dashboard_data(self, queryset, request=None):
+        """
+        Gera o resumo estatístico dos envios, incluindo listas detalhadas.
+        """
+        # --- Totais e filtros por status ---
+        pendentes_qs = queryset.filter(id_status__descricao_status__iexact="Pendente")
+        validados_qs = queryset.filter(id_status__descricao_status__iexact="Validado")
+        rejeitados_qs = queryset.filter(id_status__descricao_status__iexact="Rejeitado")
+
+        total_envios = queryset.count()
+        pendentes = pendentes_qs.count()
+        validados = validados_qs.count()
+        rejeitados = rejeitados_qs.count()
+
+        # --- Serialização das listas ---
+
+        # --- Agrupamentos ---
+        por_mes = (
+            queryset.values("mes_referencia")
+            .annotate(total=Count("id"))
+            .order_by("mes_referencia")
+        )
+        meses_dict = dict(EnvioMaterial.MONTH_CHOICES)
+        por_mes = [
+            {"mes": meses_dict.get(item["mes_referencia"], item["mes_referencia"]),
+             "total": item["total"]}
+            for item in por_mes
+        ]
+
+        por_disciplina = (
+            queryset.values("id_disciplina__nome_disciplina")
+            .annotate(total=Count("id"))
+            .order_by("id_disciplina__nome_disciplina")
+        )
+        por_disciplina = [
+            {"disciplina": item["id_disciplina__nome_disciplina"], "total": item["total"]}
+            for item in por_disciplina
+        ]
+
+        response = {
+            "total_envios": total_envios,
+            "pendentes": pendentes,
+            "validados": validados,
+            "rejeitados": rejeitados,
+            "por_mes": por_mes,
+            "por_disciplina": por_disciplina,
+        }
+
+        if request and request.query_params.get('resumido', '') == 'true':
+            return response
+        
+        return {
+                **response,
+                "envios": EnvioMaterialSerializer(queryset, many=True).data,
+                "pendentes_list": EnvioMaterialSerializer(pendentes_qs, many=True).data,
+                "validados_list": EnvioMaterialSerializer(validados_qs, many=True).data,
+                "rejeitados_list": EnvioMaterialSerializer(rejeitados_qs, many=True).data,
+            }

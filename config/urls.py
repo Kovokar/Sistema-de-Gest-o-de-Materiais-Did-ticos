@@ -41,6 +41,7 @@ router.register(r'etapas-escolares', views.EtapaEscolarViewSet, basename='etapae
 router.register(r'disciplinas', views.DisciplinaViewSet, basename='disciplina')
 router.register(r'status-envio', views.StatusEnvioViewSet, basename='statusenvio')
 router.register(r'envios-material', views.EnvioMaterialViewSet, basename='enviomaterial')
+router.register(r'dashboard-envios', views.DashboardEnvioViewSet, basename='dashboard-envios')
 
 # Define URL patterns
 urlpatterns = [
