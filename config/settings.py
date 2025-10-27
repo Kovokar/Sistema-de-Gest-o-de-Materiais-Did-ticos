@@ -375,12 +375,13 @@ else:
         r"^https?:\/\/localhost(:\d+)?$",
         r"^https?:\/\/127\.0\.0\.1(:\d+)?$",
     ]
+    CORS_ALLOW_CREDENTIALS = True
 
 # CORS configuration for frontend integration
 
 
 # CORS settings
-CORS_ALLOW_CREDENTIALS = True
+# CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOWED_HEADERS = [
     'accept',
     'accept-encoding',
