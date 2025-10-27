@@ -358,14 +358,26 @@ SPECTACULAR_SETTINGS = {
     'PREPROCESSING_HOOKS': [],
 }
 
+DEVELOPMENT = config('DEVELOPMENT', default=False, cast=bool)
+
+if DEVELOPMENT:
+    CORS_ALLOW_ALL_ORIGINS = True
+else:
+    CORS_ALLOW_ALL_ORIGINS = False
+    CORS_ALLOWED_ORIGINS = [
+        "http://localhost:3000",      # React development server
+        "http://127.0.0.1:3000",      # Alternative localhost
+        "http://localhost:8080",      # Vue.js development server
+        "http://localhost:4200",      # Angular development server
+        "https://app.educacao.gov.br", # Production frontend
+        "http://localhost:5173",
+        "https://app-gestao-odilon-nunes.vercel.app/"
+        r"^https?:\/\/localhost(:\d+)?$",
+        r"^https?:\/\/127\.0\.0\.1(:\d+)?$",
+    ]
+
 # CORS configuration for frontend integration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",      # React development server
-    "http://127.0.0.1:3000",      # Alternative localhost
-    "http://localhost:8080",      # Vue.js development server
-    "http://localhost:4200",      # Angular development server
-    "https://app.educacao.gov.br", # Production frontend
-]
+
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
