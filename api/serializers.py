@@ -38,7 +38,7 @@ class UsuarioSerializer(serializers.ModelSerializer):
     class Meta:
         model = Usuario
         fields = [
-            'id_usuario', 'id_perfil', 'perfil_nome', 'nome_usuario', 
+            'id', 'id_perfil', 'perfil_nome', 'nome_usuario', 
             'matricula', 'cpf', 'password', 'telefone'
         ]
         extra_kwargs = {
