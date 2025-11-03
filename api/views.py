@@ -67,8 +67,8 @@ class PerfilViewSet(viewsets.ModelViewSet):
     serializer_class = PerfilSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nome_perfil']
-    ordering_fields = ['id_perfil', 'nome_perfil']
-    ordering = ['id_perfil']
+    ordering_fields = ['id', 'nome_perfil']
+    ordering = ['id']
 
 
 @extend_schema_view(
