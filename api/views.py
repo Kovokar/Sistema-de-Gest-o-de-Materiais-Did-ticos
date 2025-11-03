@@ -266,8 +266,8 @@ class EtapaEscolarViewSet(viewsets.ModelViewSet):
     serializer_class = EtapaEscolarSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nome_etapa']
-    ordering_fields = ['id_etapa', 'nome_etapa']
-    ordering = ['id_etapa']
+    ordering_fields = ['id', 'nome_etapa']
+    ordering = ['id']
 
 
 @extend_schema_view(
@@ -356,8 +356,8 @@ class StatusEnvioViewSet(viewsets.ModelViewSet):
     serializer_class = StatusEnvioSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['descricao_status']
-    ordering_fields = ['id_status', 'descricao_status']
-    ordering = ['id_status']
+    ordering_fields = ['id', 'descricao_status']
+    ordering = ['id']
 
 
 class EnvioMaterialFilter(filters.FilterSet):
