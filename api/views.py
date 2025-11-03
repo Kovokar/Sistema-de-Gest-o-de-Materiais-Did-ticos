@@ -731,7 +731,20 @@ class FileUploadView(APIView):
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
+RESUMIDO_PARAM = OpenApiParameter(
+    name="resumido",
+    type=OpenApiTypes.BOOL,
+    location=OpenApiParameter.QUERY,
+    description=(
+        "Se `true`, retorna apenas o resumo (totais de pendentes, validados e rejeitados), "
+        "sem as listas detalhadas de envios."
+    ),
+    required=False,
+    examples=[
+        {"value": "true", "summary": "Resposta resumida"},
+        {"value": "false", "summary": "Resposta completa (padrão)"},
+    ],
+)
 
 class DashboardEnvioViewSet(viewsets.ViewSet):
     """
@@ -750,16 +763,23 @@ class DashboardEnvioViewSet(viewsets.ViewSet):
     # ============================
     @extend_schema(
         summary="Dashboard do usuário logado",
-        description="Retorna estatísticas completas (totais + listas) dos envios do usuário autenticado.",
+        description=(
+            "Retorna estatísticas completas (totais + listas) dos envios do usuário autenticado.\n\n"
+            "**Dica:** adicione `?resumido=true` à URL para retornar apenas os totais, "
+            "sem listas detalhadas."
+        ),
         tags=["Dashboard - Envios"],
+        parameters=[RESUMIDO_PARAM],
         responses={200: OpenApiResponse(description="Resumo dos envios do usuário logado.")}
     )
     @action(detail=False, methods=["get"], url_path="me")
     def dashboard_me(self, request):
+        """
+        Retorna o dashboard apenas para o usuário autenticado.
+        """
         user = request.user
         queryset = self.get_queryset().filter(id_usuario=user)
-
-        data = self._get_dashboard_data(queryset)
+        data = self._get_dashboard_data(queryset, request=request)
         return Response(data, status=status.HTTP_200_OK)
 
     # ============================
@@ -767,12 +787,20 @@ class DashboardEnvioViewSet(viewsets.ViewSet):
     # ============================
     @extend_schema(
         summary="Dashboard geral de envios",
-        description="Retorna estatísticas completas (totais + listas) de todos os envios do sistema.",
+        description=(
+            "Retorna estatísticas completas (totais + listas) de todos os envios do sistema.\n\n"
+            "**Dica:** adicione `?resumido=true` à URL para retornar apenas os totais, "
+            "sem listas detalhadas."
+        ),
         tags=["Dashboard - Envios"],
+        parameters=[RESUMIDO_PARAM],
         responses={200: OpenApiResponse(description="Resumo geral dos envios.")}
     )
     @action(detail=False, methods=["get"], url_path="geral")
     def dashboard_geral(self, request):
+        """
+        Retorna o dashboard geral do sistema.
+        """
         queryset = self.get_queryset()
         data = self._get_dashboard_data(queryset, request)
         return Response(data, status=status.HTTP_200_OK)
@@ -782,21 +810,27 @@ class DashboardEnvioViewSet(viewsets.ViewSet):
     # ============================
     def _get_dashboard_data(self, queryset, request=None):
         """
-        Gera o resumo estatístico dos envios, incluindo listas detalhadas.
+        Gera o resumo estatístico dos envios, incluindo listas detalhadas
+        (a menos que seja solicitado o modo 'resumido').
         """
+
         # --- Totais e filtros por status ---
         pendentes_qs = queryset.filter(id_status__descricao_status__iexact="Pendente")
         validados_qs = queryset.filter(id_status__descricao_status__iexact="Validado")
         rejeitados_qs = queryset.filter(id_status__descricao_status__iexact="Rejeitado")
 
-        total_envios = queryset.count()
-        pendentes = pendentes_qs.count()
-        validados = validados_qs.count()
-        rejeitados = rejeitados_qs.count()
+        response = {
+            "total_envios": queryset.count(),
+            "pendentes": pendentes_qs.count(),
+            "validados": validados_qs.count(),
+            "rejeitados": rejeitados_qs.count(),
+        }
 
-        # --- Serialização das listas ---
+        # Se for modo resumido, retorna apenas os totais
+        if request and request.query_params.get("resumido", "").lower() == "true":
+            return response
 
-        # --- Agrupamentos ---
+        # --- Agrupamento por mês ---
         por_mes = (
             queryset.values("mes_referencia")
             .annotate(total=Count("id"))
@@ -809,6 +843,7 @@ class DashboardEnvioViewSet(viewsets.ViewSet):
             for item in por_mes
         ]
 
+        # --- Agrupamento por disciplina ---
         por_disciplina = (
             queryset.values("id_disciplina__nome_disciplina")
             .annotate(total=Count("id"))
@@ -819,22 +854,13 @@ class DashboardEnvioViewSet(viewsets.ViewSet):
             for item in por_disciplina
         ]
 
-        response = {
-            "total_envios": total_envios,
-            "pendentes": pendentes,
-            "validados": validados,
-            "rejeitados": rejeitados,
+        # --- Retorna resumo completo ---
+        return {
+            **response,
             "por_mes": por_mes,
             "por_disciplina": por_disciplina,
+            "envios": EnvioMaterialSerializer(queryset, many=True).data,
+            "pendentes_list": EnvioMaterialSerializer(pendentes_qs, many=True).data,
+            "validados_list": EnvioMaterialSerializer(validados_qs, many=True).data,
+            "rejeitados_list": EnvioMaterialSerializer(rejeitados_qs, many=True).data,
         }
-
-        if request and request.query_params.get('resumido', '') == 'true':
-            return response
-        
-        return {
-                **response,
-                "envios": EnvioMaterialSerializer(queryset, many=True).data,
-                "pendentes_list": EnvioMaterialSerializer(pendentes_qs, many=True).data,
-                "validados_list": EnvioMaterialSerializer(validados_qs, many=True).data,
-                "rejeitados_list": EnvioMaterialSerializer(rejeitados_qs, many=True).data,
-            }
