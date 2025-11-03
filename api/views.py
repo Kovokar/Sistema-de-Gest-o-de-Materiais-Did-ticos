@@ -311,8 +311,8 @@ class DisciplinaViewSet(viewsets.ModelViewSet):
     serializer_class = DisciplinaSerializer
     filter_backends = [SearchFilter, OrderingFilter]
     search_fields = ['nome_disciplina']
-    ordering_fields = ['id_disciplina', 'nome_disciplina']
-    ordering = ['id_disciplina']
+    ordering_fields = ['id', 'nome_disciplina']
+    ordering = ['id']
 
 
 @extend_schema_view(
