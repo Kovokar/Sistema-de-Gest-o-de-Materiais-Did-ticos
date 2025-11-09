@@ -533,6 +533,7 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
 )
     @action(detail=True, methods=['post'])
     def validar(self, request, pk=None):
+        print(type(pk))
         """
         Valida ou rejeita um envio de material.
 
@@ -597,9 +598,17 @@ class EnvioMaterialViewSet(viewsets.ModelViewSet):
             return Response({"error": "Envio não encontrado"}, status=status.HTTP_404_NOT_FOUND)
 
         try:
-            status_obj = StatusEnvio.objects.get(pk=request.data.get("status_id"))
+            status_id = request.data.get("status_id")
+            status_obj = StatusEnvio.objects.get(pk=status_id)
         except StatusEnvio.DoesNotExist:
             return Response({"error": "Status não encontrado"}, status=status.HTTP_404_NOT_FOUND)
+
+        if str(status_id) == "2": # Enviado
+            envio.data_envio_formador = datetime.now().date()
+            envio.data_envio_see = datetime.now().date()
+
+        if str(status_id) == "3": # Validado
+            self.validar(request=request, pk=pk)
 
 
         observacoes = request.data.get("observacoes_gerencia", "")
